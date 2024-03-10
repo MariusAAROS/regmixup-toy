@@ -231,7 +231,7 @@ Note: If you have a gpu, you can make a slight modification to the code to use i
 
 #### 3.3. Results
 
-With corruption severity factor of 5, we obtain the following results :
+With corruption severity factor of 1, we obtain the following results :
 
 |           |  entropy  | accuracy |  brier   |   ece    |   nll    |
 |-----------|-----------|----------|----------|----------|----------|
@@ -239,6 +239,6 @@ With corruption severity factor of 5, we obtain the following results :
 | mixup     |  0.600136 |   0.7582 | 0.333260 | 0.036063 | 0.703461 |
 | regmixup  |  0.555782 |   0.7686 | 0.327091 | 0.044761 | 0.684864 |
 
-
 ### 4. Conclusion
 
+As a conclusion, we have seen that RegMixup is a powerful method to regularize deep neural networks. Despite being very simple and cost-effective, it is important to specify that the paper does not provide a theoretical explanation of the method. These experimental grounds are very promising but it appears important to stay cautious while utilizing RegMixup.
