@@ -212,6 +212,23 @@ results_mixup = cli_main(mixup, dm, root, net_name, args=args)
 results_regmixup = cli_main(regmixup, dm, root, net_name, args=args)
 ```
 
+Note: If you have a gpu, you can make a slight modification to the code to use it :
+1. Click on `cli_main` and press `F12` to go to the function definition.
+2. Go to line 222 and replace the trainer definition by the following one: 
+```python
+# trainer
+    trainer = pl.Trainer.from_argparse_args(
+        args,
+        accelerator="gpu",
+        devices=1,
+        callbacks=callbacks,
+        logger=tb_logger,
+        deterministic=(args.seed is not None),
+        inference_mode=not (args.opt_temp_scaling or args.val_temp_scaling),
+    )
+```
+3. Save the file and you are all set.
+
 #### 3.3. Results
 
 With corruption severity factor of 5, we obtain the following results :
