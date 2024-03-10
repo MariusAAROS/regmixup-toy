@@ -98,6 +98,129 @@ As a preliminary conclusion, RegMixup is a very powerful, cost-efficient and sim
 
 ### 3. RegMixup in practice (implementation)
 
+Now, our objective will be to demonstrate the effectiveness of RegMixup through a very simple example. We will use the CIFAR-10-C dataset (corrupted version of CIFAR-10) and a standard ResNet-18 model. We will compare performances of 3 models : 
+- A baseline model trained with ERM
+- A model trained with Mixup
+- A model trained with RegMixup
+
+To do so, we have to possibilities :
+- Use the official implementation of RegMixup available on [Francesco Pinto's GitHub](https://github.com/FrancescoPinto/RegMixup). 
+- Use the torch-uncertainty library which provides a simple and efficient way to use RegMixup. Note, the library is developed by researchers from ENSTA Paris and is available on [GitHub](https://github.com/ENSTA-U2IS-AI/torch-uncertainty).
+
+In this blog post, we will use the torch-uncertainty library as it is very simple to use and provides a very well implemented version of RegMixup.
+
+#### 3.1. Installation
+
+First, we need to install the torch-uncertainty library. To do so, we can use pip :
+
+```bash
+pip install torch-uncertainty
+```
+
+Note: If you use a gpu, torch-uncertainty will automatically install a cpu version of torch and torchvision, you can compile the following lines to install the gpu version of torch and torchvision (took from [PyTorch website](https://pytorch.org/get-started/locally/)) :
+
+```bash 
+pip unistall torch torchvision
+pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu118
+```
+
+To check if the installation was successful, you can run the following code, it should return True if you have a gpu and False if you don't have one :
+
+```python
+import torch
+print(torch.cuda.is_available())
+```
+
+#### 3.2. Training the models with torch-uncertainty
+
+Now that we have installed torch-uncertainty, we can train the models. First, we need to import the necessary libraries :
+
+```python
+from torch_uncertainty import cli_main, init_args
+from torch_uncertainty.baselines.classification import ResNet
+from torch_uncertainty.optimization_procedures import optim_cifar10_resnet18
+from torch_uncertainty.datamodules import CIFAR10DataModule
+from torchvision.datasets import CIFAR10
+from torchvision import transforms
+from torch.nn import CrossEntropyLoss
+import torch
+
+import os
+from pathlib import Path
+from cli_test_helpers import ArgvContext
+```
+
+Then, we can define the 3 models we discussed earlier :
+
+```python
+baseline = ResNet(num_classes=10,
+                loss=CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                version="std",
+                in_channels=3, 
+                arch=18).cuda()
+
+mixup = ResNet(num_classes=10,
+                loss=CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                version="std",
+                in_channels=3, 
+                arch=18, 
+                mixup=True,
+                mixup_alpha=0.2).cuda()
+
+regmixup = ResNet(num_classes=10,
+                loss=CrossEntropyLoss,
+                optimization_procedure=optim_cifar10_resnet18,
+                version="std",
+                in_channels=3,
+                arch=18,
+                reg_mixup=True,
+                mixup_alpha=15).cuda()
+```
+
+Before training the models, we need to define important arguments such as training parameters (epochs, estimators, etc.) and the datamodule. We can do so with the following code:
+
+```python
+
+root = Path(os.path.abspath(""))
+
+# We mock the arguments for the trainer
+with ArgvContext(
+    "file.py",
+    "--max_epochs",
+    "20",
+    "--enable_progress_bar",
+    "False",
+    "--num_estimators",
+    "8"
+):
+    args = init_args(network=ResNet, datamodule=CIFAR10DataModule)
+
+net_name = "logs/reset18-cifar10"
+
+# datamodule
+args.root = str(root / "data")
+dm = CIFAR10DataModule(**vars(args))
+```
+
+Finally, we can train the models using the `cli_main` function from torch-uncertainty :
+
+```python
+results_baseline = cli_main(baseline, dm, root, net_name, args=args)
+results_mixup = cli_main(mixup, dm, root, net_name, args=args)
+results_regmixup = cli_main(regmixup, dm, root, net_name, args=args)
+```
+
+#### 3.3. Results
+
+With corruption severity factor of 5, we obtain the following results :
+
+|           |  entropy  | accuracy |  brier   |   ece    |   nll    |
+|-----------|-----------|----------|----------|----------|----------|
+| baseline  |  0.606845 |   0.7714 | 0.317779 | 0.023155 | 0.668178 |
+| mixup     |  0.600136 |   0.7582 | 0.333260 | 0.036063 | 0.703461 |
+| regmixup  |  0.555782 |   0.7686 | 0.327091 | 0.044761 | 0.684864 |
 
 
 ### 4. Conclusion
