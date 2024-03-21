@@ -231,13 +231,26 @@ Note: If you have a gpu, you can make a slight modification to the code to use i
 
 #### 3.3. Results
 
-With corruption severity factor of 1, we obtain the following results :
+So as to compare the performances of the 3 models, we use two corrupted versions of Cifar-10-C. The first version has a corruption severity factor of 5 (slight data corruption) and the second one has a corruption severity factor of 15 (severe data corruption). Our study contains 5 metrics : entropy, accuracy, brier score, expected calibration error (ECE) and negative log-likelihood (NLL). In our explanation, we will focus on the accuracy and entropy to keep it simple.
 
-|           |  entropy  | accuracy |  brier   |   ece    |   nll    |
-|-----------|-----------|----------|----------|----------|----------|
-| baseline  |  0.606845 |   0.7714 | 0.317779 | 0.023155 | 0.668178 |
-| mixup     |  0.600136 |   0.7582 | 0.333260 | 0.036063 | 0.703461 |
-| regmixup  |  0.555782 |   0.7686 | 0.327091 | 0.044761 | 0.684864 |
+With corruption severity factor of 5, we obtain the following results :
+
+|          | entropy  | accuracy |  brier   |   ece    |   nll    |
+|----------|----------|----------|----------|----------|----------|
+| baseline | 0.656294 |   0.7480 | 0.349862 | 0.032466 | 0.729336 |
+| mixup    | 0.640811 |   0.7578 | 0.335403 | 0.024429 | 0.703844 |
+| regmixup | 0.676174 |   0.7564 | 0.340233 | 0.023135 | 0.711405 |
+
+First of all, we can see that the accuracy is quite similar for the 3 models. This makes sense as the corruption severity factor is quite low, thus cifar-10-c is not very different from the original cifar-10. However, we can see that the entropy of the regmixup model is higher than the one of the mixup model. This is symptomatic of mixup's underconfidence. As stated previously, given the low corruption severity factor of cifar-10-c, the underconfidence of mixup does not impact its performances in a visible manner.
+
+With corruption severity factor of 15, we obtain the following results :
+|          | entropy  | accuracy |  brier   |   ece    |   nll    |
+|----------|----------|----------|----------|----------|----------|
+| baseline | 0.615607 |   0.7402 | 0.358522 | 0.048414 | 0.750933 |
+| mixup    | 0.698558 |   0.7558 | 0.338540 | 0.014760 | 0.709190 |
+| regmixup | 0.702599 |   0.7614 | 0.327945 | 0.008439 | 0.687550 |
+
+Here the results are much more unequivocal. As the severity factor increases, the baseline model drops in accuracy and entropy, mixup also drops in accuracy but increases in entropy and regmixup increases in accuracy and entropy. Here, the regmixup has the higher entropy as the model has higher entropy for OOD samples which are more frequent at this corruption level. Consequently, regmixup is more confident and accurate than the mixup model eventhough mixup is not fully underperforming. 
 
 ### 4. Conclusion
 
